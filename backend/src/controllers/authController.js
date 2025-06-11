@@ -1,45 +1,34 @@
-import jwt from 'jsonwebtoken';
+import User from "../models/User.js";
 
-export const googleCallback = async (req, res) => {
+export const login = async (req, res) => {
+  const { googleId, email, name, image, accessToken, refreshToken } = req.body;
+  if (!googleId || !email || !accessToken) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
   try {
-    const user = req.user;
-    const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+    let user = await User.findOne({ googleId });
 
-    res.cookie('access_token', token, {
-      httpOnly: true,              
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'Lax',
-      maxAge: 3600000              
-    });
+    if (user) {
+      user.accessToken = accessToken;
+      user.refreshToken = refreshToken || user.refreshToken;
+      await user.save();
+    } else {
+      user = await User.create({
+        googleId,
+        email,
+        name,
+        picture: image,
+        accessToken,
+        refreshToken,
+      });
+    }
 
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+    return res.status(200).json({ message: "User saved successfully", user });
   } catch (error) {
-    console.error('Error in googleCallback:', error);
-    res.status(500).send('Internal Server Error');
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-export const loginFailure = (req, res) => {
-  res.status(401).send('Failed to authenticate');
-};
-
-export const logout = (req, res) => {
-    console.log('--');
-    
-  res.clearCookie('access_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // send only over HTTPS in production
-    sameSite: 'strict',
-  });
-
-  return res.status(200).json({ message: 'Logged out successfully' });
-};
 

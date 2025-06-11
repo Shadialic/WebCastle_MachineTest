@@ -1,3 +1,4 @@
+// models/User.js
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
@@ -26,11 +27,10 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: false, 
   },
-  reminderSent:{
-    type:Boolean,
-    default:false,
+  reminderSent: {
+    type: Boolean,
+    default: false,
   },
   lastReminderSent: {
     type: Date,
@@ -40,4 +40,4 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-export default mongoose.model('User', userSchema);
+export default mongoose.models.User || mongoose.model('User', userSchema);

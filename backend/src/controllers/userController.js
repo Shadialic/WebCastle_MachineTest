@@ -16,7 +16,6 @@ export const getUserData = async (req, res) => {
 
     return res.status(200).json({ user });
   } catch (error) {
-    console.error("Error getting user data:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -47,11 +46,36 @@ export const addPhone = async (req, res) => {
   }
 };
 
+export const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    const { phone } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.phone = phone;
+    await user.save();
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 export const getEventData = async (req, res) => {
   try {
-    const userId = req?.user?.id;
-    const user = await User.findById(userId);
-    if (!user || !user.accessToken) {
+    const userData = req?.user;
+    const userId = userData._id;
+
+    if (!userData || !userData.accessToken) {
       return res
         .status(404)
         .json({ error: "User not found or access token missing" });
@@ -62,7 +86,7 @@ export const getEventData = async (req, res) => {
       process.env.GOOGLE_CLIENT_SECRET
     );
 
-    oAuth2Client.setCredentials({ access_token: user.accessToken });
+    oAuth2Client.setCredentials({ access_token: userData.accessToken });
     const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
     const now = new Date();
     const calendarResponse = await calendar.events.list({
@@ -73,7 +97,6 @@ export const getEventData = async (req, res) => {
       singleEvents: true,
     });
     const events = calendarResponse.data.items || [];
-
     const savedEvents = await Promise.all(
       events.map(async (event) => {
         const existing = await Event.findOne({
@@ -98,7 +121,7 @@ export const getEventData = async (req, res) => {
 
     return res.status(200).json({ events: savedEvents });
   } catch (err) {
-    console.error("Error fetching or saving calendar events:", err.message);
+    console.error("Error fetching or saving calendar events:", err);
     return res.status(500).json({ error: "Failed to fetch and save events" });
   }
 };

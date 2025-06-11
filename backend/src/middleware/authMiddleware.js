@@ -1,17 +1,32 @@
-import jwt from 'jsonwebtoken';
+import axios from "axios";
+import User from "../models/User.js";
 
-export const authenticateToken = (req, res, next) => {
-  const token = req.cookies.access_token; 
+export const authenticateToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
-    return res.status(401).json({ error: 'Unauthorized: No token provided' });
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
   }
 
+  const token = authHeader.split(" ")[1];
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; 
+    const { data } = await axios.get(
+      `https://www.googleapis.com/oauth2/v1/userinfo?alt=json`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    const userData = await User.findOne({ googleId: data?.id });
+    req.user = userData;
     next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+  } catch (error) {
+    console.error(
+      "Invalid Google token:",
+      error?.response?.data || error.message
+    );
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };

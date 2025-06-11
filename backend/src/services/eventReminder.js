@@ -39,7 +39,6 @@ async function checkUserEvents(user) {
     });
 
     const events = calendarResponse.data.items || [];
-
     for (const event of events) {
       if (event.start && event.start.dateTime) {
         const startEvent = new Date(event.start.dateTime);
@@ -60,7 +59,10 @@ async function checkUserEvents(user) {
         }
         await user.save();
         await checkUserEvents(user);
-      } catch (refreshError) {}
+      } catch (err) {
+        console.log(err);
+        
+      }
     }
   }
 }
@@ -76,10 +78,9 @@ async function handleEventReminder(user, event) {
     const eventTitle = event.summary || "Upcoming Event";
     const eventTime = new Date(event.start.dateTime).toLocaleTimeString();
     await makePhoneCall(user.phone, eventTitle, eventTime);
-    user.reminderSent=true;
+    user.reminderSent = true;
     user.lastReminderSent = now;
     await user.save();
-    
   } catch (error) {
     console.error(error.message);
   }
