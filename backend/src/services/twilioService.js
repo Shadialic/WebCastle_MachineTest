@@ -1,5 +1,5 @@
-import 'dotenv/config';
-import twilio from 'twilio';
+import "dotenv/config";
+import twilio from "twilio";
 const { VoiceResponse } = twilio.twiml;
 
 const client = twilio(
@@ -8,12 +8,11 @@ const client = twilio(
 );
 
 export async function makePhoneCall(phoneNumber, eventTitle, eventTime) {
-  console.log(phoneNumber, eventTitle, eventTime,'phoneNumber, eventTitle, eventTime');
+  console.log("calling...");
   
-
   const vr = new VoiceResponse();
   vr.say(
-    { voice: 'alice' },
+    { voice: "alice" },
     `Hello! This is a reminder from your Calendar app. 
      You have an upcoming event: ${eventTitle}, 
      scheduled for ${eventTime}. 
@@ -23,13 +22,14 @@ export async function makePhoneCall(phoneNumber, eventTitle, eventTime) {
 
   try {
     const call = await client.calls.create({
-      to:`+91${phoneNumber}`,                
+      to: `+91${phoneNumber}`,
       from: process.env.TWILIO_PHONE_NUMBER,
-      twiml: twimlMessage,                        
+      twiml: twimlMessage,
     });
+
     return call;
   } catch (err) {
-    console.error('Error making phone call:', err);
+    console.error("Error making phone call:", err);
     throw err;
   }
 }

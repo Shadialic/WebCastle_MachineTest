@@ -1,25 +1,45 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true
-});
+const createApi = (accessToken) => {
+  const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const instance = axios.create({
+    baseURL,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    withCredentials: true,
+  });
 
-api.interceptors.request.use((config) => {
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      window.location.href = '/';
+  instance.interceptors.request.use(
+    (config) => {
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
-);
+  );
 
-export default api; 
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response) {
+        if (error.response.status === 401) {
+          console.error('🔒 Authentication error:', error.response.data);
+        }
+      
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Request error:', error.message);
+      }
+      return Promise.reject(error);
+    }
+  );
+
+  return instance;
+};
+
+export default createApi;

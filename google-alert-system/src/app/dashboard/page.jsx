@@ -1,4 +1,4 @@
-import Index from '@/components/dashboard/Index'
+import Index from '../../components/dashboard/Index'
 import React from 'react'
 
 function page() {

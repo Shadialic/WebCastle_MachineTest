@@ -1,26 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-const publicPaths = ['/', '/api/auth'];
+export function middleware(req) {
+  const token =
+    req.cookies.get("next-auth.session-token") ||
+    req.cookies.get("__Secure-next-auth.session-token");
 
-function middleware(request) {
-  const { pathname } = request.nextUrl;
-
-  const authCookie = request.cookies.get('access_token');
-  if (!authCookie && !publicPaths.some(path => pathname.startsWith(path))) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  if (authCookie && pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  if (!token && req.nextUrl.pathname.startsWith("/dashboard")) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/"; 
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|_next|_static|_vercel|[\\w-]+\\.\\w+).*)',
-  ],
+  matcher: ["/dashboard/:path*"], 
 };
-
-export { middleware }; 

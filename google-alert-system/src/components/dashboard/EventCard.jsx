@@ -1,18 +1,6 @@
 import React from 'react';
 
 const EventCard = ({ event }) => {
-  const formatDateTime = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
 
   const formatTimeRange = (startTime, endTime) => {
     if (!startTime) return '';
